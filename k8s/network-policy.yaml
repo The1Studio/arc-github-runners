@@ -1,0 +1,78 @@
+---
+# NetworkPolicy for arc-runners namespace
+# Restricts outbound network access to only necessary destinations
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: runner-egress-policy
+  namespace: arc-runners
+spec:
+  podSelector:
+    matchLabels:
+      app: actions-runner
+  policyTypes:
+    - Egress
+    - Ingress
+  # Ingress: Runners don't need inbound connections (except from controller)
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: arc-systems
+  # Egress: Allow only necessary outbound connections
+  egress:
+    # Allow DNS resolution
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+      ports:
+      - protocol: UDP
+        port: 53
+    # Allow GitHub API and Git operations (HTTPS only)
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 443  # HTTPS
+      - protocol: TCP
+        port: 22   # SSH for git operations
+    # Block HTTP (port 80) - force HTTPS usage
+    # No explicit rule = deny by default
+---
+# NetworkPolicy for arc-systems namespace
+# Allow controller to communicate with runners and GitHub API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: controller-egress-policy
+  namespace: arc-systems
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: actions-runner-controller
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+      ports:
+      - protocol: UDP
+        port: 53
+    # Allow GitHub API access
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 443  # HTTPS only
+    # Allow communication with Kubernetes API
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: default
+      ports:
+      - protocol: TCP
+        port: 6443  # k3s API server

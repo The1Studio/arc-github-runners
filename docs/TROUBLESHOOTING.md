@@ -42,13 +42,14 @@ kubectl logs -n arc-systems -l app.kubernetes.io/name=actions-runner-controller
 #### A. Invalid GitHub Token
 
 ```bash
-# Verify token exists
+# Verify secret exists
 kubectl get secret controller-manager -n arc-systems
 
-# Check token value (will show encrypted)
-kubectl get secret controller-manager -n arc-systems -o jsonpath='{.data.github_token}' | base64 -d
+# ⚠️ SECURITY NOTE: Never decode and display GitHub tokens in logs
+# To verify token is valid, check ARC controller logs instead:
+kubectl logs -n arc-systems -l app.kubernetes.io/name=actions-runner-controller | grep -i auth
 
-# Solution: Update token
+# Solution: Update token if needed
 GITHUB_TOKEN=$(gh auth token)
 kubectl delete secret controller-manager -n arc-systems
 kubectl create secret generic controller-manager \

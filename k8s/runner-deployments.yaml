@@ -6,8 +6,11 @@ metadata:
   name: the1studio-org-runners
   namespace: arc-runners
 spec:
-  replicas: 3
   template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: the1studio-org
     spec:
       organization: the1studio
       image: the1studio/actions-runner:https-apt
@@ -20,6 +23,35 @@ spec:
         - the1studio
         - org
       env: []
+      # Resource limits prevent DoS attacks and resource exhaustion
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+        requests:
+          cpu: "250m"
+          memory: "512Mi"
 ---
 # Personal repository runners for tuha263
 apiVersion: actions.summerwind.dev/v1alpha1
@@ -28,8 +60,11 @@ metadata:
   name: tuha263-personal-runners
   namespace: arc-runners
 spec:
-  replicas: 2
   template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: tuha263-personal
     spec:
       repository: tuha263/personal-site
       image: the1studio/actions-runner:https-apt
@@ -41,3 +76,32 @@ spec:
         - arc
         - personal
       env: []
+      # Resource limits prevent DoS attacks and resource exhaustion
+      resources:
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+        requests:
+          cpu: "250m"
+          memory: "512Mi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "500m"
+          memory: "1Gi"
+        requests:
+          cpu: "100m"
+          memory: "256Mi"

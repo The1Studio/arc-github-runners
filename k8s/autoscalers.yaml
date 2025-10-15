@@ -1,5 +1,6 @@
 ---
-# Auto-scaler for the1studio organization runners
+# HorizontalRunnerAutoscaler for the1studio organization runners
+# Scales based on job queue and runner utilization
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: HorizontalRunnerAutoscaler
 metadata:
@@ -10,14 +11,17 @@ spec:
     name: the1studio-org-runners
   minReplicas: 2
   maxReplicas: 10
+  # Scale down delay prevents flapping during intermittent load
+  scaleDownDelaySecondsAfterScaleOut: 300  # Wait 5 min after scale-up before scale-down
   metrics:
   - type: PercentageRunnersBusy
-    scaleUpThreshold: '0.75'    # Scale up when 75% of runners are busy
-    scaleDownThreshold: '0.25'   # Scale down when only 25% are busy
-    scaleUpFactor: '2'           # Double the runners when scaling up
-    scaleDownFactor: '0.5'       # Halve the runners when scaling down
+    scaleUpThreshold: '0.75'      # Scale up when 75% busy
+    scaleDownThreshold: '0.25'    # Scale down when only 25% busy
+    scaleUpFactor: '1.5'          # Reduced from 2 to avoid over-provisioning
+    scaleDownFactor: '0.5'        # Scale down by 50%
 ---
-# Auto-scaler for personal repository runners
+# HorizontalRunnerAutoscaler for personal repository runners
+# More conservative scaling for lower-volume personal repos
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: HorizontalRunnerAutoscaler
 metadata:
@@ -28,9 +32,11 @@ spec:
     name: tuha263-personal-runners
   minReplicas: 1
   maxReplicas: 5
+  # Scale down delay prevents flapping during intermittent load
+  scaleDownDelaySecondsAfterScaleOut: 180  # Wait 3 min (shorter for personal)
   metrics:
   - type: PercentageRunnersBusy
-    scaleUpThreshold: '0.75'
-    scaleDownThreshold: '0.25'
-    scaleUpFactor: '1.5'
-    scaleDownFactor: '0.5'
+    scaleUpThreshold: '0.75'      # Scale up when 75% busy
+    scaleDownThreshold: '0.25'    # Scale down when only 25% busy
+    scaleUpFactor: '1.5'          # Moderate growth rate
+    scaleDownFactor: '0.5'        # Scale down by 50%
