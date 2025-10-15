@@ -29,6 +29,14 @@ This repository contains the configuration for managing self-hosted GitHub Actio
 
 ## ⚠️ Important Notes
 
+### ✅ Port 80 HTTP Issue - PERMANENTLY FIXED
+
+**This issue is now fixed** at the runner image level. The custom image `the1studio/actions-runner:https-apt` has pre-configured HTTPS APT sources.
+
+**You no longer need to add HTTP→HTTPS conversion in workflows!**
+
+See [docker/README.md](docker/README.md) for details about the custom image.
+
 ### Public Repository Access
 
 **CRITICAL**: Organization-level runners cannot be used by public repositories by default.

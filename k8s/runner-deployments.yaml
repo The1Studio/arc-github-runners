@@ -10,6 +10,8 @@ spec:
   template:
     spec:
       organization: the1studio
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
       labels:
         - self-hosted
         - linux
@@ -30,6 +32,8 @@ spec:
   template:
     spec:
       repository: tuha263/personal-site
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
       labels:
         - self-hosted
         - linux
