@@ -21,7 +21,7 @@ spec:
             name: arc-systems
   # Egress: Allow only necessary outbound connections
   egress:
-    # Allow DNS resolution
+    # Allow DNS resolution to cluster DNS
     - to:
       - namespaceSelector:
           matchLabels:
@@ -29,16 +29,15 @@ spec:
       ports:
       - protocol: UDP
         port: 53
-    # Allow GitHub API and Git operations (HTTPS only)
-    - to:
-      - namespaceSelector: {}
-      ports:
+    # Allow all HTTPS traffic (GitHub API, pipelines, git over HTTPS)
+    - ports:
       - protocol: TCP
-        port: 443  # HTTPS
+        port: 443
+    # Allow SSH for git operations
+    - ports:
       - protocol: TCP
-        port: 22   # SSH for git operations
-    # Block HTTP (port 80) - force HTTPS usage
-    # No explicit rule = deny by default
+        port: 22
+    # Block HTTP (port 80) - no explicit rule = deny by default
 ---
 # NetworkPolicy for arc-systems namespace
 # Allow controller to communicate with runners and GitHub API
@@ -54,7 +53,7 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Allow DNS resolution
+    # Allow DNS resolution to cluster DNS
     - to:
       - namespaceSelector:
           matchLabels:
@@ -62,17 +61,13 @@ spec:
       ports:
       - protocol: UDP
         port: 53
-    # Allow GitHub API access
+    # Allow all HTTPS traffic (GitHub API)
+    - ports:
+      - protocol: TCP
+        port: 443
+    # Allow communication with Kubernetes API server
     - to:
-      - namespaceSelector: {}
+      - podSelector: {}
       ports:
       - protocol: TCP
-        port: 443  # HTTPS only
-    # Allow communication with Kubernetes API
-    - to:
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: default
-      ports:
-      - protocol: TCP
-        port: 6443  # k3s API server
+        port: 6443
