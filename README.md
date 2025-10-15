@@ -2,6 +2,8 @@
 
 Self-hosted GitHub Actions runners using Actions Runner Controller on k3s.
 
+**Repository:** https://github.com/The1Studio/arc-github-runners
+
 ## Overview
 
 This repository contains the configuration for managing self-hosted GitHub Actions runners across multiple repositories and organizations using Kubernetes.
@@ -55,7 +57,7 @@ gh api orgs/the1studio/actions/runner-groups/1 --jq '.allows_public_repositories
 
 **Alternative**: Use repository-level runners instead of organization-level runners for public repositories. See [examples/additional-runners.yaml](k8s/examples/additional-runners.yaml).
 
-For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#d-public-repository-not-allowed).
+For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](https://github.com/The1Studio/arc-github-runners/blob/master/docs/TROUBLESHOOTING.md#d-public-repository-not-allowed).
 
 ---
 

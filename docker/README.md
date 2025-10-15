@@ -103,5 +103,7 @@ kubectl rollout restart runnerdeployment -n arc-runners
 
 ---
 
+**Repository:** https://github.com/The1Studio/arc-github-runners
+
 **Created:** 2025-10-15
-**Maintained By:** tuha263
+**Maintained By:** The1Studio
