@@ -25,6 +25,32 @@ This repository contains the configuration for managing self-hosted GitHub Actio
 - Labels: `self-hosted`, `arc`, `personal`
 - Auto-scales based on job queue
 
+---
+
+## ⚠️ Important Notes
+
+### Public Repository Access
+
+**CRITICAL**: Organization-level runners cannot be used by public repositories by default.
+
+If your workflow stays in "Queued" state forever, you need to enable public repository access:
+
+```bash
+# Enable public repositories for organization runners
+gh api -X PATCH orgs/the1studio/actions/runner-groups/1 \
+  -F allows_public_repositories=true
+
+# Verify the change
+gh api orgs/the1studio/actions/runner-groups/1 --jq '.allows_public_repositories'
+# Should return: true
+```
+
+**Alternative**: Use repository-level runners instead of organization-level runners for public repositories. See [examples/additional-runners.yaml](k8s/examples/additional-runners.yaml).
+
+For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#d-public-repository-not-allowed).
+
+---
+
 ## Quick Start
 
 ### Prerequisites

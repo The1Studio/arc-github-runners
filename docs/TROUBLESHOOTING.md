@@ -144,6 +144,51 @@ kubectl describe pod -n arc-runners <pod-name>
 kubectl logs -n arc-runners <pod-name> -c runner --tail=50
 ```
 
+#### D. Public Repository Not Allowed
+
+**⚠️ COMMON ISSUE:** Organization runners cannot be used by public repositories by default.
+
+**Symptoms:**
+- Runners are online
+- Workflow stays in "Queued" state forever
+- Repository is public
+- Runners are registered at organization level
+
+**Diagnosis:**
+```bash
+# Check if repo is public
+gh repo view owner/repo --json visibility
+
+# Check runner group settings
+gh api orgs/the1studio/actions/runner-groups --jq '.runner_groups[] | {name, allows_public_repositories}'
+```
+
+**Solution:**
+```bash
+# Enable public repositories for Default runner group
+gh api -X PATCH orgs/the1studio/actions/runner-groups/1 \
+  -F allows_public_repositories=true
+
+# Verify the change
+gh api orgs/the1studio/actions/runner-groups/1 --jq '.allows_public_repositories'
+# Should return: true
+```
+
+**Alternative:** Use repository-level runners instead of organization-level runners:
+```yaml
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: myrepo-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/public-repo  # Specific repository
+      labels: [self-hosted, arc, myrepo]
+```
+
 ---
 
 ### 3. Pod Stuck in ContainerCreating
