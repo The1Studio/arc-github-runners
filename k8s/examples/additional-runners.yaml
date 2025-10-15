@@ -1,0 +1,184 @@
+# Example: Additional Runner Deployments
+# Copy and modify these templates for your needs
+
+---
+# Example 1: Repository-specific runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: myrepo-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/repo-name  # Change this
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - myrepo  # Custom label
+      env: []
+
+---
+# Example 2: Organization-level runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: another-org-runners
+  namespace: arc-runners
+spec:
+  replicas: 3
+  template:
+    spec:
+      organization: another-org  # Change this
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - another-org
+      env: []
+
+---
+# Example 3: Runners with resource limits
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: resource-limited-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/repo
+      labels:
+        - self-hosted
+        - limited-resources
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+
+---
+# Example 4: Runners with environment variables
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: custom-env-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/repo
+      labels:
+        - self-hosted
+        - custom-env
+      env:
+        - name: NODE_ENV
+          value: "production"
+        - name: CUSTOM_VAR
+          value: "custom-value"
+
+---
+# Example 5: Enterprise runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: enterprise-runners
+  namespace: arc-runners
+spec:
+  replicas: 5
+  template:
+    spec:
+      enterprise: my-enterprise  # Change this
+      labels:
+        - self-hosted
+        - enterprise
+        - linux
+        - x64
+
+---
+# Corresponding Auto-Scaler for Example 1
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: myrepo-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners  # Must match deployment name
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'
+    scaleDownThreshold: '0.25'
+    scaleUpFactor: '1.5'
+    scaleDownFactor: '0.5'
+
+---
+# Alternative: TotalNumberOfQueuedAndInProgressWorkflowRuns metric
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: queue-based-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
+    repositoryNames:
+      - owner/repo1
+      - owner/repo2
+
+---
+# Schedule-based scaling (scale up during business hours)
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: scheduled-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners
+  scaleDownDelaySecondsAfterScaleOut: 300  # Wait 5min before scaling down
+  minReplicas: 1
+  maxReplicas: 10
+  scheduledOverrides:
+  - startTime: "2025-01-01T09:00:00+07:00"  # Business hours start
+    endTime: "2025-12-31T18:00:00+07:00"    # Business hours end
+    recurrenceRule:
+      frequency: Daily
+    minReplicas: 3  # Keep 3 runners during business hours
+
+---
+# Example: Webhook-based scaling
+# NOTE: Requires webhook server setup (advanced)
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: webhook-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners
+  minReplicas: 0  # Can scale to zero!
+  maxReplicas: 10
+  metrics:
+  - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
+    repositoryNames:
+      - owner/repo
+  scaleUpTriggers:
+  - githubEvent:
+      workflowJob: {}
+    amount: 1
+    duration: "5m"
