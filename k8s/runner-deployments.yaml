@@ -1,0 +1,39 @@
+---
+# Organization-level runners for the1studio
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: the1studio-org-runners
+  namespace: arc-runners
+spec:
+  replicas: 3
+  template:
+    spec:
+      organization: the1studio
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - the1studio
+        - org
+      env: []
+---
+# Personal repository runners for tuha263
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: tuha263-personal-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: tuha263/personal-site
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - personal
+      env: []

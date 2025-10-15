@@ -1,0 +1,18 @@
+# Secrets
+*.key
+*.pem
+*secret*.yaml
+.env
+
+# k3s
+kubeconfig
+k3s.yaml
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# OS
+.DS_Store
+Thumbs.db

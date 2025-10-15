@@ -1,0 +1,36 @@
+---
+# Auto-scaler for the1studio organization runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: the1studio-org-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: the1studio-org-runners
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'    # Scale up when 75% of runners are busy
+    scaleDownThreshold: '0.25'   # Scale down when only 25% are busy
+    scaleUpFactor: '2'           # Double the runners when scaling up
+    scaleDownFactor: '0.5'       # Halve the runners when scaling down
+---
+# Auto-scaler for personal repository runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: tuha263-personal-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: tuha263-personal-runners
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'
+    scaleDownThreshold: '0.25'
+    scaleUpFactor: '1.5'
+    scaleDownFactor: '0.5'

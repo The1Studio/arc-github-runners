@@ -1,0 +1,55 @@
+# Sample workflow to test ARC auto-scaling
+# Place this in .github/workflows/test-arc.yml in any the1studio repository
+
+name: Test ARC Auto-Scaling
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ main, master ]
+
+jobs:
+  # Job 1: Simple test
+  test-runner:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display runner info
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Runner arch: $RUNNER_ARCH"
+          uname -a
+
+      - name: Test Docker access
+        run: |
+          docker --version
+          docker ps
+
+  # Job 2-6: Parallel jobs to trigger auto-scaling
+  stress-test-1:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 1 complete"
+
+  stress-test-2:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 2 complete"
+
+  stress-test-3:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 3 complete"
+
+  stress-test-4:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 4 complete"
+
+  stress-test-5:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 5 complete"
