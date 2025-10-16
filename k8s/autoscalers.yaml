@@ -9,7 +9,7 @@ metadata:
 spec:
   scaleTargetRef:
     name: the1studio-org-runners
-  minReplicas: 2
+  minReplicas: 3
   maxReplicas: 10
   # Scale down delay prevents flapping during intermittent load
   scaleDownDelaySecondsAfterScaleOut: 300  # Wait 5 min after scale-up before scale-down
