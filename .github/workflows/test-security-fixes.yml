@@ -84,10 +84,8 @@ jobs:
       - name: Test Docker build
         run: |
           echo "=== Testing Docker build ==="
-          cat > Dockerfile.test <<'EOF'
-FROM alpine:latest
-RUN echo "Test build successful"
-EOF
+          echo "FROM alpine:latest" > Dockerfile.test
+          echo 'RUN echo "Test build successful"' >> Dockerfile.test
           docker build -t test-build -f Dockerfile.test .
           docker rmi test-build
           rm Dockerfile.test
