@@ -106,6 +106,40 @@ kubectl apply -f k8s/runner-deployments.yaml
 kubectl apply -f k8s/autoscalers.yaml
 ```
 
+## Documentation
+
+### Quick Links
+
+**Getting Started**:
+- 📖 [Project Overview & PDR](docs/project-overview-pdr.md) - Project goals, requirements, and vision
+- 🏗️ [System Architecture](docs/system-architecture.md) - Detailed architecture and component design
+- 📝 [Code Standards](docs/code-standards.md) - Coding conventions and best practices
+- 📊 [Codebase Summary](docs/codebase-summary.md) - Repository structure and key components
+
+**Operations**:
+- 🚀 [Usage Guide](docs/USAGE.md) - How to use runners in workflows
+- ⚙️ [Management](docs/MANAGEMENT.md) - Management commands and operations
+- 🔧 [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- 💾 [Backup & Recovery](docs/BACKUP.md) - Disaster recovery procedures
+
+**Technical**:
+- 🐳 [Custom Docker Image](docker/README.md) - HTTPS APT fix details
+- 📋 [Example Runners](k8s/examples/additional-runners.yaml) - Templates for new runners
+
+### Documentation Structure
+
+```
+docs/
+├── project-overview-pdr.md    # 📖 Project goals & requirements
+├── system-architecture.md     # 🏗️ Architecture & components
+├── code-standards.md          # 📝 Standards & conventions
+├── codebase-summary.md        # 📊 Repository overview
+├── USAGE.md                   # 🚀 Workflow integration
+├── MANAGEMENT.md              # ⚙️ Operations & commands
+├── TROUBLESHOOTING.md         # 🔧 Common issues
+└── BACKUP.md                  # 💾 Disaster recovery
+```
+
 ## Repository Structure
 
 ```
@@ -114,14 +148,24 @@ kubectl apply -f k8s/autoscalers.yaml
 ├── k8s/
 │   ├── runner-deployments.yaml    # Runner deployment configurations
 │   ├── autoscalers.yaml            # Auto-scaling rules
+│   ├── network-policy.yaml         # Network security policies
+│   ├── pod-disruption-budget.yaml # High availability settings
 │   └── examples/
 │       └── additional-runners.yaml # Template for adding more runners
+├── docker/
+│   ├── Dockerfile                  # Custom runner image
+│   └── README.md                   # Image documentation
 ├── workflows/
 │   └── test-arc.yml                # Sample workflow to test runners
 └── docs/
-    ├── USAGE.md                    # How to use runners in workflows
+    ├── project-overview-pdr.md     # Project overview & PDR
+    ├── system-architecture.md      # System architecture
+    ├── code-standards.md           # Code standards
+    ├── codebase-summary.md         # Codebase summary
+    ├── USAGE.md                    # How to use runners
     ├── MANAGEMENT.md               # Management commands
-    └── TROUBLESHOOTING.md          # Common issues and fixes
+    ├── TROUBLESHOOTING.md          # Common issues
+    └── BACKUP.md                   # Backup & recovery
 ```
 
 ## Usage in Workflows

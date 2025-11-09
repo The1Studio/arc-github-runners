@@ -1,0 +1,1030 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+docker/
+  Dockerfile
+  README.md
+k8s/
+  examples/
+    additional-runners.yaml
+  autoscalers.yaml
+  network-policy.yaml
+  pod-disruption-budget.yaml
+  runner-deployments.yaml
+workflows/
+  test-arc.yml
+.gitignore
+.repomixignore
+CLAUDE.md
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="k8s/examples/additional-runners.yaml">
+# Example: Additional Runner Deployments
+# Copy and modify these templates for your needs
+
+---
+# Example 1: Repository-specific runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: myrepo-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/repo-name  # Change this
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - myrepo  # Custom label
+      env: []
+
+---
+# Example 2: Organization-level runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: another-org-runners
+  namespace: arc-runners
+spec:
+  replicas: 3
+  template:
+    spec:
+      organization: another-org  # Change this
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - another-org
+      env: []
+
+---
+# Example 3: Runners with resource limits
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: resource-limited-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/repo
+      labels:
+        - self-hosted
+        - limited-resources
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+
+---
+# Example 4: Runners with environment variables
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: custom-env-runners
+  namespace: arc-runners
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: owner/repo
+      labels:
+        - self-hosted
+        - custom-env
+      env:
+        - name: NODE_ENV
+          value: "production"
+        - name: CUSTOM_VAR
+          value: "custom-value"
+
+---
+# Example 5: Enterprise runners
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: enterprise-runners
+  namespace: arc-runners
+spec:
+  replicas: 5
+  template:
+    spec:
+      enterprise: my-enterprise  # Change this
+      labels:
+        - self-hosted
+        - enterprise
+        - linux
+        - x64
+
+---
+# Corresponding Auto-Scaler for Example 1
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: myrepo-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners  # Must match deployment name
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'
+    scaleDownThreshold: '0.25'
+    scaleUpFactor: '1.5'
+    scaleDownFactor: '0.5'
+
+---
+# Alternative: TotalNumberOfQueuedAndInProgressWorkflowRuns metric
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: queue-based-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
+    repositoryNames:
+      - owner/repo1
+      - owner/repo2
+
+---
+# Schedule-based scaling (scale up during business hours)
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: scheduled-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners
+  scaleDownDelaySecondsAfterScaleOut: 300  # Wait 5min before scaling down
+  minReplicas: 1
+  maxReplicas: 10
+  scheduledOverrides:
+  - startTime: "2025-01-01T09:00:00+07:00"  # Business hours start
+    endTime: "2025-12-31T18:00:00+07:00"    # Business hours end
+    recurrenceRule:
+      frequency: Daily
+    minReplicas: 3  # Keep 3 runners during business hours
+
+---
+# Example: Webhook-based scaling
+# NOTE: Requires webhook server setup (advanced)
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: webhook-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: myrepo-runners
+  minReplicas: 0  # Can scale to zero!
+  maxReplicas: 10
+  metrics:
+  - type: TotalNumberOfQueuedAndInProgressWorkflowRuns
+    repositoryNames:
+      - owner/repo
+  scaleUpTriggers:
+  - githubEvent:
+      workflowJob: {}
+    amount: 1
+    duration: "5m"
+</file>
+
+<file path="k8s/pod-disruption-budget.yaml">
+---
+# PodDisruptionBudget for the1studio organization runners
+# Ensures at least 1 runner is always available during voluntary disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: the1studio-org-runners-pdb
+  namespace: arc-runners
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      runner-deployment-name: the1studio-org-runners
+---
+# PodDisruptionBudget for personal runners
+# Ensures at least 1 runner is available (50% of min replicas)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tuha263-personal-runners-pdb
+  namespace: arc-runners
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      runner-deployment-name: tuha263-personal-runners
+</file>
+
+<file path="workflows/test-arc.yml">
+# Sample workflow to test ARC auto-scaling
+# Place this in .github/workflows/test-arc.yml in any the1studio repository
+
+name: Test ARC Auto-Scaling
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ main, master ]
+
+jobs:
+  # Job 1: Simple test
+  test-runner:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display runner info
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Runner arch: $RUNNER_ARCH"
+          uname -a
+
+      - name: Test Docker access
+        run: |
+          docker --version
+          docker ps
+
+  # Job 2-6: Parallel jobs to trigger auto-scaling
+  stress-test-1:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 1 complete"
+
+  stress-test-2:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 2 complete"
+
+  stress-test-3:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 3 complete"
+
+  stress-test-4:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 4 complete"
+
+  stress-test-5:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - run: sleep 60 && echo "Stress test 5 complete"
+</file>
+
+<file path=".gitignore">
+# Secrets
+*.key
+*.pem
+*secret*.yaml
+.env
+
+# k3s
+kubeconfig
+k3s.yaml
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+</file>
+
+<file path=".repomixignore">
+docs/*
+plans/*
+assets/*
+dist/*
+coverage/*
+build/*
+ios/*
+android/*
+tests/*
+__tests__/*
+__pycache__/*
+node_modules/*
+
+.opencode/*
+.claude/*
+.serena/*
+.pnpm-store/*
+.github/*
+.dart_tool/*
+.idea/*
+.husky/*
+.venv/*
+</file>
+
+<file path="CLAUDE.md">
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Role & Responsibilities
+
+Your role is to analyze user requirements, delegate tasks to appropriate sub-agents, and ensure cohesive delivery of features that meet specifications and architectural standards.
+
+## Workflows
+
+- Primary workflow: `./.claude/workflows/primary-workflow.md`
+- Development rules: `./.claude/workflows/development-rules.md`
+- Orchestration protocols: `./.claude/workflows/orchestration-protocol.md`
+- Documentation management: `./.claude/workflows/documentation-management.md`
+- And other workflows: `./.claude/workflows/*`
+
+**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
+**IMPORTANT:** You must follow strictly the development rules in `./.claude/workflows/development-rules.md` file.
+**IMPORTANT:** Before you plan or proceed any implementation, always read the `./README.md` file first to get context.
+**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
+**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+**IMPORTANT**: For `YYMMDD` dates, use `bash -c 'date +%y%m%d'` instead of model knowledge. Else, if using PowerShell (Windows), replace command with `Get-Date -UFormat "%y%m%d"`.
+
+## Documentation Management
+
+We keep all important docs in `./docs` folder and keep updating them, structure like below:
+
+```
+./docs
+├── project-overview-pdr.md
+├── code-standards.md
+├── codebase-summary.md
+├── design-guidelines.md
+├── deployment-guide.md
+├── system-architecture.md
+└── project-roadmap.md
+```
+
+**IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
+</file>
+
+<file path="docker/Dockerfile">
+# Custom GitHub Actions Runner with HTTPS APT sources
+# Based on official summerwind/actions-runner image
+# Pin specific version to prevent supply chain attacks and ensure reproducibility
+FROM summerwind/actions-runner:v2.328.0-ubuntu-22.04
+
+# Switch to root to modify system files
+USER root
+
+# Fix APT sources to use HTTPS instead of HTTP (port 80 blocked in k8s)
+RUN sed -i 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.ubuntu.com|https://security.ubuntu.com|g' /etc/apt/sources.list
+
+# Disable PPAs that don't support HTTPS
+RUN find /etc/apt/sources.list.d/ -type f -name "*.list" \
+    -exec sed -i 's|^deb http://ppa.launchpad.net|# deb http://ppa.launchpad.net|g' {} \;
+
+# Update package lists and clean up
+RUN apt-get update && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Switch back to runner user (non-root)
+USER runner
+
+# Label for tracking
+LABEL maintainer="tuha263" \
+      description="GitHub Actions Runner with HTTPS APT sources" \
+      version="1.1" \
+      base-image="summerwind/actions-runner:v2.328.0-ubuntu-22.04" \
+      issue="port-80-http-blocked"
+</file>
+
+<file path="docker/README.md">
+# Custom GitHub Actions Runner Image
+
+This directory contains a custom Docker image for GitHub Actions runners with pre-configured HTTPS APT sources.
+
+## Problem
+
+The default `summerwind/actions-runner` image uses HTTP (port 80) for APT package sources. In Kubernetes environments with strict network policies (like k3s with firewall rules), port 80 is often blocked while port 443 (HTTPS) is allowed.
+
+This causes workflows to fail when trying to install packages:
+```
+Cannot initiate the connection to archive.ubuntu.com:80
+Could not connect to security.ubuntu.com:80
+E: The repository 'http://archive.ubuntu.com/ubuntu focal-updates Release' does not have a Release file
+```
+
+## Solution
+
+This custom image pre-configures all APT sources to use HTTPS instead of HTTP:
+- `https://archive.ubuntu.com` (instead of http://)
+- `https://security.ubuntu.com` (instead of http://)
+- Disables PPAs that don't support HTTPS
+
+## Building the Image
+
+```bash
+cd /mnt/Work/1M/arc-github-runners/docker
+docker build -t the1studio/actions-runner:https-apt .
+```
+
+## Importing to k3s
+
+```bash
+docker save the1studio/actions-runner:https-apt | sudo k3s ctr images import -
+```
+
+## Usage in Runner Deployments
+
+The image is already configured in `k8s/runner-deployments.yaml`:
+
+```yaml
+spec:
+  template:
+    spec:
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
+```
+
+## Benefits
+
+✅ **No workflow changes needed** - Workflows can use `apt-get` without modifications
+✅ **Works in restricted networks** - Uses HTTPS (port 443) instead of HTTP (port 80)
+✅ **Pre-cached APT lists** - Faster startup times
+✅ **Production ready** - Tested and verified
+
+## Testing
+
+Verify the fix works:
+
+```bash
+# Get a running pod
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+POD=$(kubectl get pods -n arc-runners -l runner-deployment-name=the1studio-org-runners -o name | head -1)
+
+# Check APT sources use HTTPS
+kubectl exec -n arc-runners $POD -c runner -- cat /etc/apt/sources.list
+
+# Test apt-get update
+kubectl exec -n arc-runners $POD -c runner -- sudo apt-get update
+```
+
+Expected: All sources use `https://` and apt-get update succeeds without port 80 errors.
+
+## Maintenance
+
+### Updating the Base Image
+
+When `summerwind/actions-runner` releases a new version:
+
+```bash
+# Pull latest base image
+docker pull summerwind/actions-runner:latest
+
+# Rebuild custom image
+docker build -t the1studio/actions-runner:https-apt .
+
+# Import to k3s
+docker save the1studio/actions-runner:https-apt | sudo k3s ctr images import -
+
+# Restart runners
+kubectl rollout restart runnerdeployment -n arc-runners
+```
+
+## Files
+
+- `Dockerfile` - Image definition with HTTPS APT configuration
+- `README.md` - This file
+
+## Related Documentation
+
+- [Main README](../README.md) - ARC setup overview
+- [TROUBLESHOOTING](../docs/TROUBLESHOOTING.md) - Port 80 HTTP issue details
+- [GitHub Issue](https://github.com/actions/actions-runner-controller/issues/2056) - Upstream issue tracking
+
+---
+
+**Repository:** https://github.com/The1Studio/arc-github-runners
+
+**Created:** 2025-10-15
+**Maintained By:** The1Studio
+</file>
+
+<file path="k8s/network-policy.yaml">
+---
+# NetworkPolicy for arc-runners namespace
+# Restricts outbound network access to only necessary destinations
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: runner-egress-policy
+  namespace: arc-runners
+spec:
+  podSelector:
+    matchLabels:
+      app: actions-runner
+  policyTypes:
+    - Egress
+    - Ingress
+  # Ingress: Runners don't need inbound connections (except from controller)
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: arc-systems
+  # Egress: Allow only necessary outbound connections
+  egress:
+    # Allow DNS resolution to cluster DNS
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+      ports:
+      - protocol: UDP
+        port: 53
+    # Allow all HTTPS traffic (GitHub API, pipelines, git over HTTPS)
+    - ports:
+      - protocol: TCP
+        port: 443
+    # Allow SSH for git operations
+    - ports:
+      - protocol: TCP
+        port: 22
+    # Block HTTP (port 80) - no explicit rule = deny by default
+---
+# NetworkPolicy for arc-systems namespace
+# Allow controller to communicate with runners and GitHub API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: controller-egress-policy
+  namespace: arc-systems
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: actions-runner-controller
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution to cluster DNS
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+      ports:
+      - protocol: UDP
+        port: 53
+    # Allow all HTTPS traffic (GitHub API)
+    - ports:
+      - protocol: TCP
+        port: 443
+    # Allow communication with Kubernetes API server
+    - to:
+      - podSelector: {}
+      ports:
+      - protocol: TCP
+        port: 6443
+</file>
+
+<file path="k8s/autoscalers.yaml">
+---
+# HorizontalRunnerAutoscaler for the1studio organization runners
+# Scales based on job queue and runner utilization
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: the1studio-org-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: the1studio-org-runners
+  minReplicas: 3
+  maxReplicas: 10
+  # Scale down delay prevents flapping during intermittent load
+  scaleDownDelaySecondsAfterScaleOut: 300  # Wait 5 min after scale-up before scale-down
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'      # Scale up when 75% busy
+    scaleDownThreshold: '0.25'    # Scale down when only 25% busy
+    scaleUpFactor: '1.5'          # Reduced from 2 to avoid over-provisioning
+    scaleDownFactor: '0.5'        # Scale down by 50%
+---
+# HorizontalRunnerAutoscaler for personal repository runners
+# More conservative scaling for lower-volume personal repos
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: tuha263-personal-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: tuha263-personal-runners
+  minReplicas: 1
+  maxReplicas: 5
+  # Scale down delay prevents flapping during intermittent load
+  scaleDownDelaySecondsAfterScaleOut: 180  # Wait 3 min (shorter for personal)
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'      # Scale up when 75% busy
+    scaleDownThreshold: '0.25'    # Scale down when only 25% busy
+    scaleUpFactor: '1.5'          # Moderate growth rate
+    scaleDownFactor: '0.5'        # Scale down by 50%
+</file>
+
+<file path="k8s/runner-deployments.yaml">
+---
+# Organization-level runners for the1studio
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: the1studio-org-runners
+  namespace: arc-runners
+spec:
+  template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: the1studio-org
+    spec:
+      organization: the1studio
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - the1studio
+        - org
+      env: []
+      # Resource limits prevent DoS attacks and resource exhaustion
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+        requests:
+          cpu: "250m"
+          memory: "512Mi"
+---
+# Personal repository runners for tuha263
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: tuha263-personal-runners
+  namespace: arc-runners
+spec:
+  template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: tuha263-personal
+    spec:
+      repository: tuha263/personal-site
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - personal
+      env: []
+      # Resource limits prevent DoS attacks and resource exhaustion
+      resources:
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+        requests:
+          cpu: "250m"
+          memory: "512Mi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "500m"
+          memory: "1Gi"
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+</file>
+
+<file path="README.md">
+# GitHub Actions Runner Controller (ARC) Setup
+
+Self-hosted GitHub Actions runners using Actions Runner Controller on k3s.
+
+**Repository:** https://github.com/The1Studio/arc-github-runners
+
+## Overview
+
+This repository contains the configuration for managing self-hosted GitHub Actions runners across multiple repositories and organizations using Kubernetes.
+
+### Features
+
+- ✅ **Auto-scaling runners** - Automatically scale based on workload
+- ✅ **Multi-organization support** - Separate runner pools
+- ✅ **Kubernetes-based** - Runs on lightweight k3s
+- ✅ **Resource efficient** - Minimal overhead (~150MB for k3s)
+
+### Current Deployment
+
+**Organization Runners (the1studio)**
+- Min: 2 runners, Max: 10 runners
+- Labels: `self-hosted`, `arc`, `the1studio`, `org`
+- Auto-scales based on job queue
+
+**Personal Runners (tuha263)**
+- Min: 1 runner, Max: 5 runners
+- Labels: `self-hosted`, `arc`, `personal`
+- Auto-scales based on job queue
+
+---
+
+## ⚠️ Important Notes
+
+### ✅ Port 80 HTTP Issue - PERMANENTLY FIXED
+
+**This issue is now fixed** at the runner image level. The custom image `the1studio/actions-runner:https-apt` has pre-configured HTTPS APT sources.
+
+**You no longer need to add HTTP→HTTPS conversion in workflows!**
+
+See [docker/README.md](docker/README.md) for details about the custom image.
+
+### Public Repository Access
+
+**CRITICAL**: Organization-level runners cannot be used by public repositories by default.
+
+If your workflow stays in "Queued" state forever, you need to enable public repository access:
+
+```bash
+# Enable public repositories for organization runners
+gh api -X PATCH orgs/the1studio/actions/runner-groups/1 \
+  -F allows_public_repositories=true
+
+# Verify the change
+gh api orgs/the1studio/actions/runner-groups/1 --jq '.allows_public_repositories'
+# Should return: true
+```
+
+**Alternative**: Use repository-level runners instead of organization-level runners for public repositories. See [examples/additional-runners.yaml](k8s/examples/additional-runners.yaml).
+
+For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](https://github.com/The1Studio/arc-github-runners/blob/master/docs/TROUBLESHOOTING.md#d-public-repository-not-allowed).
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Linux system (tested on Arch Linux)
+- `curl` and `bash`
+- GitHub Personal Access Token with `repo` or `admin:org` scope
+
+### Installation
+
+```bash
+# 1. Install k3s
+curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644
+
+# 2. Install Helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# 3. Install cert-manager
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+
+# 4. Wait for cert-manager
+kubectl wait --for=condition=ready pod -l app=cert-manager -n cert-manager --timeout=120s
+
+# 5. Install ARC controller
+kubectl create namespace arc-systems
+kubectl create namespace arc-runners
+
+helm repo add actions-runner-controller https://actions-runner-controller.github.io/actions-runner-controller
+helm repo update
+
+# Create GitHub token secret
+kubectl create secret generic controller-manager \
+  --namespace arc-systems \
+  --from-literal=github_token="YOUR_GITHUB_PAT"
+
+helm install arc \
+  --namespace arc-systems \
+  actions-runner-controller/actions-runner-controller
+
+# 6. Deploy runners
+kubectl apply -f k8s/runner-deployments.yaml
+kubectl apply -f k8s/autoscalers.yaml
+```
+
+## Repository Structure
+
+```
+.
+├── README.md
+├── k8s/
+│   ├── runner-deployments.yaml    # Runner deployment configurations
+│   ├── autoscalers.yaml            # Auto-scaling rules
+│   └── examples/
+│       └── additional-runners.yaml # Template for adding more runners
+├── workflows/
+│   └── test-arc.yml                # Sample workflow to test runners
+└── docs/
+    ├── USAGE.md                    # How to use runners in workflows
+    ├── MANAGEMENT.md               # Management commands
+    └── TROUBLESHOOTING.md          # Common issues and fixes
+```
+
+## Usage in Workflows
+
+### For the1studio Organization
+
+```yaml
+jobs:
+  build:
+    runs-on: [self-hosted, arc, the1studio, org]
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Running on the1studio runner"
+```
+
+### For Personal Repositories
+
+```yaml
+jobs:
+  deploy:
+    runs-on: [self-hosted, arc, personal]
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Running on personal runner"
+```
+
+## Management
+
+### Check Runner Status
+
+```bash
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+# View all runners
+kubectl get pods -n arc-runners
+
+# Check auto-scalers
+kubectl get hra -n arc-runners
+
+# View logs
+kubectl logs -n arc-runners <pod-name> -c runner
+```
+
+### Scale Runners Manually
+
+```bash
+# Scale organization runners to 5
+kubectl scale runnerdeployment the1studio-org-runners \
+  -n arc-runners --replicas=5
+
+# Scale personal runners to 3
+kubectl scale runnerdeployment tuha263-personal-runners \
+  -n arc-runners --replicas=3
+```
+
+## Auto-Scaling Behavior
+
+### Organization Runners (the1studio)
+- **Min replicas:** 2
+- **Max replicas:** 10
+- **Scale up:** When 75% of runners are busy
+- **Scale down:** When only 25% are busy
+- **Scale up factor:** 2x (doubles the runners)
+- **Scale down factor:** 0.5x (halves the runners)
+
+### Personal Runners (tuha263)
+- **Min replicas:** 1
+- **Max replicas:** 5
+- **Scale up:** When 75% of runners are busy
+- **Scale down:** When only 25% are busy
+- **Scale up factor:** 1.5x
+- **Scale down factor:** 0.5x
+
+## Troubleshooting
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues.
+
+Quick checks:
+
+```bash
+# Check if ARC controller is running
+kubectl get pods -n arc-systems
+
+# Check if runners are registered in GitHub
+gh api orgs/the1studio/actions/runners
+
+# View ARC controller logs
+kubectl logs -n arc-systems -l app.kubernetes.io/name=actions-runner-controller
+```
+
+## Contributing
+
+This is a personal infrastructure repository. Changes should be tested in a development environment before applying to production.
+
+## License
+
+MIT
+
+## Maintainer
+
+[@tuha263](https://github.com/tuha263)
+</file>
+
+</files>
