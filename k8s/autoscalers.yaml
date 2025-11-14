@@ -40,3 +40,65 @@ spec:
     scaleDownThreshold: '0.25'    # Scale down when only 25% busy
     scaleUpFactor: '1.5'          # Moderate growth rate
     scaleDownFactor: '0.5'        # Scale down by 50%
+---
+# HorizontalRunnerAutoscaler for Android APK builder
+# High resource runners - conservative scaling to prevent resource exhaustion
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: android-apk-builder-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: android-apk-builder
+  minReplicas: 1
+  maxReplicas: 3  # Limited due to high resource usage (8CPU/16GB each)
+  # Longer delay for high-resource runners to avoid thrashing
+  scaleDownDelaySecondsAfterScaleOut: 600  # Wait 10 min after scale-up
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.80'      # Scale up when 80% busy (higher threshold)
+    scaleDownThreshold: '0.20'    # Scale down when only 20% busy
+    scaleUpFactor: '1.5'          # Conservative growth
+    scaleDownFactor: '0.5'        # Scale down by 50%
+---
+# HorizontalRunnerAutoscaler for Unity deployment runners
+# Moderate resource runners - balanced scaling
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: containerized-unity-deploy-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: containerized-unity-deploy
+  minReplicas: 1
+  maxReplicas: 5  # Moderate limit (4CPU/8GB each)
+  scaleDownDelaySecondsAfterScaleOut: 300  # Wait 5 min after scale-up
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.75'      # Scale up when 75% busy
+    scaleDownThreshold: '0.25'    # Scale down when only 25% busy
+    scaleUpFactor: '1.5'          # Moderate growth rate
+    scaleDownFactor: '0.5'        # Scale down by 50%
+---
+# HorizontalRunnerAutoscaler for Unity Editor image builds
+# Extremely high resource runners - very conservative scaling
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: containerized-unity-sync-autoscaler
+  namespace: arc-runners
+spec:
+  scaleTargetRef:
+    name: containerized-unity-sync
+  minReplicas: 1
+  maxReplicas: 2  # Very limited due to extreme resource usage (8CPU/24GB each)
+  # Very long delay for extremely high-resource runners
+  scaleDownDelaySecondsAfterScaleOut: 900  # Wait 15 min after scale-up
+  metrics:
+  - type: PercentageRunnersBusy
+    scaleUpThreshold: '0.90'      # Scale up only when 90% busy (very high threshold)
+    scaleDownThreshold: '0.10'    # Scale down when only 10% busy
+    scaleUpFactor: '2.0'          # Double when needed (max is 2 anyway)
+    scaleDownFactor: '0.5'        # Scale down by 50%

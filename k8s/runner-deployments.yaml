@@ -112,7 +112,7 @@ spec:
 ---
 # Organization-level runners for Android APK builds
 # Purpose: Build Android APK files for the1studio organization
-# Auto-scaling: Not configured (fixed 1 replica)
+# Auto-scaling: 1-3 replicas based on load (conservative due to high resource usage)
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
@@ -169,7 +169,7 @@ spec:
 ---
 # Organization-level runners for Unity deployment
 # Purpose: Deploy Unity builds to app stores/hosting for The1Studio
-# Auto-scaling: Not configured (fixed 1 replica)
+# Auto-scaling: 1-5 replicas based on load
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
@@ -224,7 +224,7 @@ spec:
 ---
 # Repository-level runners for The1Studio/containerized-unity
 # Purpose: Build Unity Editor Docker images and sync to Harbor registry
-# Auto-scaling: Not configured (fixed 1 replica)
+# Auto-scaling: 1-2 replicas based on load (very conservative due to extreme resource usage)
 # Runs on THIS machine with Harbor access for Unity Editor image builds
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
