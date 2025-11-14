@@ -14,7 +14,7 @@ spec:
         app: actions-runner
         pool: the1studio-org
     spec:
-      organization: the1studio
+      organization: The1Studio
       image: the1studio/actions-runner:https-apt
       imagePullPolicy: IfNotPresent
       labels:
@@ -126,7 +126,7 @@ spec:
         app: actions-runner
         pool: android-apk-builder
     spec:
-      organization: the1studio
+      organization: The1Studio
       image: the1studio/actions-runner:https-apt
       imagePullPolicy: IfNotPresent
       labels:
@@ -188,8 +188,8 @@ spec:
       imagePullPolicy: IfNotPresent
       labels:
         - self-hosted
-        - Linux
-        - X64
+        - linux
+        - x64
         - deploy
       env: []
       # Resource limits for Unity deployment
@@ -243,8 +243,8 @@ spec:
       imagePullPolicy: IfNotPresent
       labels:
         - self-hosted
-        - Linux
-        - X64
+        - linux
+        - x64
         - deploy
         - harbor-access
         - harbor-host

@@ -24,3 +24,42 @@ spec:
   selector:
     matchLabels:
       runner-deployment-name: tuha263-personal-runners
+---
+# PodDisruptionBudget for Android APK builder
+# Ensures at least 1 runner is available during voluntary disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: android-apk-builder-pdb
+  namespace: arc-runners
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      runner-deployment-name: android-apk-builder
+---
+# PodDisruptionBudget for Unity deployment runners
+# Ensures at least 1 runner is available during voluntary disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: containerized-unity-deploy-pdb
+  namespace: arc-runners
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      runner-deployment-name: containerized-unity-deploy
+---
+# PodDisruptionBudget for Unity sync runners
+# Ensures at least 1 runner is available during voluntary disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: containerized-unity-sync-pdb
+  namespace: arc-runners
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      runner-deployment-name: containerized-unity-sync

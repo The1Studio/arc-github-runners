@@ -40,13 +40,13 @@ All runners use the custom image `the1studio/actions-runner:https-apt` with HTTP
 #### 4. containerized-unity-deploy (Unity Deployment)
 - **Purpose**: Deploy Unity builds to app stores/hosting
 - **Replicas**: Min 1, Max 5 (auto-scaling)
-- **Labels**: `self-hosted`, `Linux`, `X64`, `deploy`
+- **Labels**: `self-hosted`, `linux`, `x64`, `deploy`
 - **Resources**: 4 CPU / 8GB RAM per runner
 
 #### 5. containerized-unity-sync (Unity Editor Images)
 - **Purpose**: Build Unity Editor Docker images and sync to Harbor registry
 - **Replicas**: Min 1, Max 2 (auto-scaling, very conservative)
-- **Labels**: `self-hosted`, `Linux`, `X64`, `deploy`, `harbor-access`, `harbor-host`
+- **Labels**: `self-hosted`, `linux`, `x64`, `deploy`, `harbor-access`, `harbor-host`
 - **Resources**: 8 CPU / 24GB RAM per runner (extreme resource usage)
 
 ---
@@ -230,7 +230,7 @@ jobs:
 ```yaml
 jobs:
   deploy-unity:
-    runs-on: [self-hosted, Linux, X64, deploy]
+    runs-on: [self-hosted, linux, x64, deploy]
     steps:
       - uses: actions/checkout@v4
       - run: echo "Deploying Unity build"
@@ -241,7 +241,7 @@ jobs:
 ```yaml
 jobs:
   build-unity-image:
-    runs-on: [self-hosted, Linux, X64, deploy, harbor-access, harbor-host]
+    runs-on: [self-hosted, linux, x64, deploy, harbor-access, harbor-host]
     steps:
       - uses: actions/checkout@v4
       - run: echo "Building Unity Editor image"
@@ -272,8 +272,8 @@ runs-on: [self-hosted, linux, x64]
 # ❌ Missing linux and x64 - may not match properly
 runs-on: [self-hosted, arc, the1studio, org]
 
-# ❌ Case mismatch - won't match Unity runners
-runs-on: [self-hosted, linux, x64, deploy]  # Should be "Linux" and "X64"
+# ❌ Too generic - will match any Linux runner
+runs-on: [self-hosted]
 ```
 
 ## Management
