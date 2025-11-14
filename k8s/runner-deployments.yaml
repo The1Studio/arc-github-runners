@@ -1,5 +1,7 @@
 ---
-# Organization-level runners for the1studio
+# Organization-level runners for the1studio (general-purpose CI/CD)
+# Purpose: Default runners for all the1studio repos
+# Auto-scaling: 3-10 replicas based on load
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
@@ -54,6 +56,8 @@ spec:
           memory: "512Mi"
 ---
 # Personal repository runners for tuha263
+# Purpose: Build and deploy personal website (tuha263/personal-site)
+# Auto-scaling: 1-5 replicas based on load
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
@@ -105,3 +109,172 @@ spec:
         requests:
           cpu: "100m"
           memory: "256Mi"
+---
+# Organization-level runners for Android APK builds
+# Purpose: Build Android APK files for the1studio organization
+# Auto-scaling: Not configured (fixed 1 replica)
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: android-apk-builder
+  namespace: arc-runners
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: android-apk-builder
+    spec:
+      organization: the1studio
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
+      labels:
+        - self-hosted
+        - linux
+        - x64
+        - arc
+        - android
+        - apk-builder
+      env: []
+      # High resource limits for Android builds
+      resources:
+        limits:
+          cpu: "8"
+          memory: "16Gi"
+        requests:
+          cpu: "4"
+          memory: "8Gi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+---
+# Organization-level runners for Unity deployment
+# Purpose: Deploy Unity builds to app stores/hosting for The1Studio
+# Auto-scaling: Not configured (fixed 1 replica)
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: containerized-unity-deploy
+  namespace: arc-runners
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: containerized-unity-deploy
+    spec:
+      organization: The1Studio
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
+      labels:
+        - self-hosted
+        - Linux
+        - X64
+        - deploy
+      env: []
+      # Resource limits for Unity deployment
+      resources:
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+---
+# Repository-level runners for The1Studio/containerized-unity
+# Purpose: Build Unity Editor Docker images and sync to Harbor registry
+# Auto-scaling: Not configured (fixed 1 replica)
+# Runs on THIS machine with Harbor access for Unity Editor image builds
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: containerized-unity-sync
+  namespace: arc-runners
+spec:
+  template:
+    metadata:
+      labels:
+        app: actions-runner
+        pool: containerized-unity
+    spec:
+      repository: The1Studio/containerized-unity
+      image: the1studio/actions-runner:https-apt
+      imagePullPolicy: IfNotPresent
+      labels:
+        - self-hosted
+        - Linux
+        - X64
+        - deploy
+        - harbor-access
+        - harbor-host
+      env: []
+      # High resource limits for Unity Editor builds
+      resources:
+        limits:
+          cpu: "8"
+          memory: "24Gi"
+        requests:
+          cpu: "2"
+          memory: "8Gi"
+      # Security context - pod level
+      securityContext:
+        runAsNonRoot: false  # Must be false due to Docker socket access requirement
+        fsGroup: 121  # docker group on host
+      # Volume mounts for Docker socket access
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+      # Docker-in-Docker container resources
+      dockerdContainerResources:
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
