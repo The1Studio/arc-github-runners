@@ -17,15 +17,37 @@ This repository contains the configuration for managing self-hosted GitHub Actio
 
 ### Current Deployment
 
-**Organization Runners (the1studio)**
-- Min: 2 runners, Max: 10 runners
-- Labels: `self-hosted`, `arc`, `the1studio`, `org`
-- Auto-scales based on job queue
+All runners use the custom image `the1studio/actions-runner:https-apt` with HTTPS APT sources pre-configured.
 
-**Personal Runners (tuha263)**
-- Min: 1 runner, Max: 5 runners
-- Labels: `self-hosted`, `arc`, `personal`
-- Auto-scales based on job queue
+#### 1. the1studio-org-runners (General CI/CD)
+- **Purpose**: Default runners for all the1studio repositories
+- **Replicas**: Min 3, Max 10 (auto-scaling)
+- **Labels**: `self-hosted`, `linux`, `x64`, `arc`, `the1studio`, `org`
+- **Resources**: 2 CPU / 4GB RAM per runner
+
+#### 2. tuha263-personal-runners (Personal Site)
+- **Purpose**: Build and deploy personal website
+- **Replicas**: Min 1, Max 5 (auto-scaling)
+- **Labels**: `self-hosted`, `linux`, `x64`, `arc`, `personal`
+- **Resources**: 1 CPU / 2GB RAM per runner
+
+#### 3. android-apk-builder (Android Builds)
+- **Purpose**: Build Android APK files
+- **Replicas**: Min 1, Max 3 (auto-scaling, conservative)
+- **Labels**: `self-hosted`, `linux`, `x64`, `arc`, `android`, `apk-builder`
+- **Resources**: 8 CPU / 16GB RAM per runner (high resource usage)
+
+#### 4. containerized-unity-deploy (Unity Deployment)
+- **Purpose**: Deploy Unity builds to app stores/hosting
+- **Replicas**: Min 1, Max 5 (auto-scaling)
+- **Labels**: `self-hosted`, `Linux`, `X64`, `deploy`
+- **Resources**: 4 CPU / 8GB RAM per runner
+
+#### 5. containerized-unity-sync (Unity Editor Images)
+- **Purpose**: Build Unity Editor Docker images and sync to Harbor registry
+- **Replicas**: Min 1, Max 2 (auto-scaling, very conservative)
+- **Labels**: `self-hosted`, `Linux`, `X64`, `deploy`, `harbor-access`, `harbor-host`
+- **Resources**: 8 CPU / 24GB RAM per runner (extreme resource usage)
 
 ---
 
@@ -170,12 +192,12 @@ docs/
 
 ## Usage in Workflows
 
-### For the1studio Organization
+### For the1studio Organization (General CI/CD)
 
 ```yaml
 jobs:
   build:
-    runs-on: [self-hosted, arc, the1studio, org]
+    runs-on: [self-hosted, linux, x64, arc, the1studio, org]
     steps:
       - uses: actions/checkout@v4
       - run: echo "Running on the1studio runner"
@@ -186,10 +208,72 @@ jobs:
 ```yaml
 jobs:
   deploy:
-    runs-on: [self-hosted, arc, personal]
+    runs-on: [self-hosted, linux, x64, arc, personal]
     steps:
       - uses: actions/checkout@v4
       - run: echo "Running on personal runner"
+```
+
+### For Android APK Builds
+
+```yaml
+jobs:
+  build-apk:
+    runs-on: [self-hosted, linux, x64, arc, android, apk-builder]
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Building Android APK"
+```
+
+### For Unity Deployment
+
+```yaml
+jobs:
+  deploy-unity:
+    runs-on: [self-hosted, Linux, X64, deploy]
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Deploying Unity build"
+```
+
+### For Unity Editor Image Builds (Harbor Access)
+
+```yaml
+jobs:
+  build-unity-image:
+    runs-on: [self-hosted, Linux, X64, deploy, harbor-access, harbor-host]
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Building Unity Editor image"
+```
+
+### Label Matching Rules
+
+⚠️ **Important**: GitHub Actions requires ALL specified labels to match. Always include:
+- `self-hosted` - Indicates self-hosted runner
+- `linux` or `Linux` - Operating system
+- `x64` or `X64` - Architecture
+- Additional specific labels for targeting specific runner pools
+
+**Good Examples**:
+```yaml
+# ✅ Matches the1studio-org-runners
+runs-on: [self-hosted, linux, x64, arc, the1studio, org]
+
+# ✅ Matches android-apk-builder
+runs-on: [self-hosted, linux, x64, android]
+
+# ✅ Matches any Linux runner
+runs-on: [self-hosted, linux, x64]
+```
+
+**Bad Examples**:
+```yaml
+# ❌ Missing linux and x64 - may not match properly
+runs-on: [self-hosted, arc, the1studio, org]
+
+# ❌ Case mismatch - won't match Unity runners
+runs-on: [self-hosted, linux, x64, deploy]  # Should be "Linux" and "X64"
 ```
 
 ## Management
@@ -223,21 +307,37 @@ kubectl scale runnerdeployment tuha263-personal-runners \
 
 ## Auto-Scaling Behavior
 
-### Organization Runners (the1studio)
-- **Min replicas:** 2
-- **Max replicas:** 10
-- **Scale up:** When 75% of runners are busy
-- **Scale down:** When only 25% are busy
-- **Scale up factor:** 2x (doubles the runners)
-- **Scale down factor:** 0.5x (halves the runners)
+All runners use `PercentageRunnersBusy` metric for auto-scaling decisions.
 
-### Personal Runners (tuha263)
-- **Min replicas:** 1
-- **Max replicas:** 5
-- **Scale up:** When 75% of runners are busy
-- **Scale down:** When only 25% are busy
-- **Scale up factor:** 1.5x
-- **Scale down factor:** 0.5x
+### 1. the1studio-org-runners (General CI/CD)
+- **Replicas:** Min 3, Max 10
+- **Scale up:** 75% busy → 1.5x runners
+- **Scale down:** 25% busy → 0.5x runners
+- **Cooldown:** 5 minutes after scale-up
+
+### 2. tuha263-personal-runners (Personal Site)
+- **Replicas:** Min 1, Max 5
+- **Scale up:** 75% busy → 1.5x runners
+- **Scale down:** 25% busy → 0.5x runners
+- **Cooldown:** 3 minutes after scale-up
+
+### 3. android-apk-builder (Android Builds)
+- **Replicas:** Min 1, Max 3 (limited due to high resource usage)
+- **Scale up:** 80% busy → 1.5x runners (conservative)
+- **Scale down:** 20% busy → 0.5x runners
+- **Cooldown:** 10 minutes after scale-up (prevent thrashing)
+
+### 4. containerized-unity-deploy (Unity Deployment)
+- **Replicas:** Min 1, Max 5
+- **Scale up:** 75% busy → 1.5x runners
+- **Scale down:** 25% busy → 0.5x runners
+- **Cooldown:** 5 minutes after scale-up
+
+### 5. containerized-unity-sync (Unity Editor Images)
+- **Replicas:** Min 1, Max 2 (very limited due to extreme resource usage)
+- **Scale up:** 90% busy → 2x runners (very conservative)
+- **Scale down:** 10% busy → 0.5x runners
+- **Cooldown:** 15 minutes after scale-up (prevent resource exhaustion)
 
 ## Troubleshooting
 
